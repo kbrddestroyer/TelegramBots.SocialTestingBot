@@ -1,8 +1,8 @@
+# coding=utf-8
 import telebot
 import json
 import configparser
 import datetime
-import schedule
 import threading
 import os
 import time
@@ -29,6 +29,7 @@ crashreport = telebot.TeleBot(TOKEN)
 
 print(f'[LOG] {str(t.now())} | LOADING: ADMINPASS: {adminpass}')
 print(f'[LOG] {str(t.now())} | STATUS:  UP')
+
 @bot.message_handler(commands=['report'])
 def report(message):
     bot.send_message(message.chat.id, 'Кратко опишите вашу проблему:')
@@ -43,7 +44,26 @@ def send_report(message):
 def start(message):
     print(f'[LOG] {str(t.now())} | @{message.from_user.username} started')
     bot.send_message(message.chat.id, 
-    "/help для более подробной информации\nПройти тест - /test\nДругие тесты - https://psytests.org/personal/dtla.html")
+    "/help для более подробной информации\nПожалуйста, отправьте свой возраст: ")
+    bot.register_next_step_handler(message, change_age)
+
+@bot.message_handler(commands=['change_age'])
+def ChangeAge(message):
+    bot.send_message(message.chat.id, 'Пожалуйста, отправьте свой возраст: ')
+    bot.register_next_step_handler(message, change_age)
+
+def change_age(message):
+    try: 
+        int(message.text)
+    except Exception as e:
+        print(f'[LOG] {str(t.now())} | An error occured! {str(e)} FROM_USER: {message.from_user.id} {message.from_user.username}')
+        return None
+    if int(message.text) < 14 and int(message.text) > 11:
+        bot.send_message(message.chat.id, 'Вы можете пройти тест. /test')
+    elif int(message.text) >= 14 and int(message.text) <= 20:
+        bot.send_message(message.chat.id, 'Вы можете пройти тест по ссылке: https://psytests.org/personal/dtla.html')
+    else: 
+        bot.send_message(message.chat.id, 'Сейчас нет доступных тестов для этой возрастной категории.')
 
 @bot.message_handler(commands=['help'])
 def help(message):
@@ -61,6 +81,11 @@ def test(message, i = 1):
         user['username'] = message.from_user.username
         user['first_name'] = message.from_user.first_name
         user['last_name'] = message.from_user.last_name
+        bot.send_message(message.chat.id, 'Акцентуация характера — это чрезмерная выраженность отдельных черт характера и их сочетаний, представляющая крайний вариант психической нормы. У некоторых людей некоторые черты характера столь заострены (акцентуированы), что при определенных обстоятельствах это приводит к однотипным конфликтам и нервным срывам. При акцентуации характера личность становится уязвима не к любым (как при психопатиях), а лишь к определенным травмирующим воздействиям, адресованным так называемому «месту наименьшего сопротивления» данного типа характера при сохранении устойчивости к другим.\n\nОтвечайте, долго не раздумывая, вы можете выбрать один их двух предложенных ответов.')
+    if (message.text == "/stop"):
+        keyboard = types.ReplyKeyboardRemove();
+        bot.send_message(message.chat.id, "Вы остановили прохождение теста. Результаты не будут сохранены!", reply_markup = keyboard)
+        return
     if i != 1 and ( message.text != 'Да' and message.text != 'Нет' ):
         with open(f'{message.from_user.id}crash.log', 'a') as f:
             f.write(f'question{str(i - 1)}: Неверный ответ: (Сообщение: \'{message.text}\')\n')
@@ -91,10 +116,12 @@ def test(message, i = 1):
             user[str(i - 1)] = '1'
         else: user[str(i - 1)] = '-1'
         keyboard = types.ReplyKeyboardRemove()
-        #bot.send_message(message.chat.id, "Тест пройден", reply_markup=keyboard)
         msg = ""
+        comm = ""
+        print (data['res'])
         for i in range(int(data['res'])):
             res = 0
+            print (res)
             for add in data[f'res{i}']['add']:
                 if add != 0:
                     res += int(user[str(add)])
@@ -107,9 +134,14 @@ def test(message, i = 1):
                 msg += f"{cur['title']} - не выражено\n"
             elif res < 18:
                 msg += f"{cur['title']} - средняя степень выраженности\n"
+                comm += cur['comm'] + '\n'
             else:
                 msg += f"{cur['title']} - акцентуация\n"
+                comm += cur['comm'] + '\n'
+        print (msg)
         bot.send_message(message.chat.id, f"Тест пройден:\n{msg}", reply_markup=keyboard)
+        for lines in comm.split('\n'):
+            bot.send_message(message.chat.id, f"{lines}", reply_markup=keyboard)
         with open(f'{message.from_user.id}test.json', 'w') as f:
             json.dump(user, f, indent=4)
 
