@@ -29,6 +29,7 @@ crashreport = telebot.TeleBot(TOKEN)
 
 print(f'[LOG] {str(t.now())} | LOADING: ADMINPASS: {adminpass}')
 print(f'[LOG] {str(t.now())} | STATUS:  UP')
+
 @bot.message_handler(commands=['report'])
 def report(message):
     bot.send_message(message.chat.id, 'Кратко опишите вашу проблему:')
@@ -113,4 +114,8 @@ def test(message, i = 1):
         with open(f'{message.from_user.id}test.json', 'w') as f:
             json.dump(user, f, indent=4)
 
-bot.polling()
+try:
+    bot.polling()
+except Exception as e:
+    print(f'[ERR] {str(t.now())} | POLLING FATAL ERROR')
+    print(f'[ERR] {str(t.now())} | {str(e)}')
