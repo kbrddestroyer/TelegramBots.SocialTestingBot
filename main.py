@@ -30,6 +30,43 @@ crashreport = telebot.TeleBot(TOKEN)
 print(f'[LOG] {str(t.now())} | LOADING: ADMINPASS: {adminpass}')
 print(f'[LOG] {str(t.now())} | STATUS:  UP')
 
+with open('book.txt', 'r') as f:
+    lines = f.readlines()
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+    if (call.data == 'back'):
+        with open ('users.json', 'r') as f:
+                data = json.load(f)
+        data[str(call.message.chat.id)] -= 1
+        keyb = types.InlineKeyboardMarkup()
+        if (data[str(call.message.chat.id)] == 0):
+            keyb.add(types.InlineKeyboardButton(text='>', callback_data='forw'))
+        else:
+            keyb.row(
+                    types.InlineKeyboardButton(text='<', callback_data='back'),
+                    types.InlineKeyboardButton(text='>', callback_data='forw')
+            )
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                text=str(lines[data[str(call.message.chat.id)]]), reply_markup=keyb)
+        with open('users.json', 'w') as f:
+            json.dump(data, f, indent=4)
+    if (call.data == 'forw'):
+        with open ('users.json', 'r') as f:
+            data = json.load(f)
+        data[str(call.message.chat.id)] += 1
+        keyb = types.InlineKeyboardMarkup()
+        if (data[str(call.message.chat.id)] == len(lines) - 1):
+            keyb.add(types.InlineKeyboardButton(text='<', callback_data='back'))
+        else:
+            keyb.row(
+                types.InlineKeyboardButton(text='<', callback_data='back'),
+                types.InlineKeyboardButton(text='>', callback_data='forw')
+            )
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+        text=str(lines[data[str(call.message.chat.id)]]), reply_markup=keyb)
+        with open('users.json', 'w') as f:
+            json.dump(data, f, indent=4)
 @bot.message_handler(commands=['report'])
 def report(message):
     bot.send_message(message.chat.id, 'Кратко опишите вашу проблему:')
@@ -70,6 +107,18 @@ def help(message):
     print(f'[LOG] {str(t.now())} | @{message.from_user.username} help file requested')
     bot.send_message(message.chat.id, "/start - запуск бота\n/test - запустить тестирование\n/report - отправить сообщение об ошибке")
 
+@bot.message_handler(commands=['info'])
+def info(message):
+    with open('users.json', 'r') as f:
+        data = json.load(f)
+    data[str(message.chat.id)] = 0
+    
+    keyb = types.InlineKeyboardMarkup()
+    keyb.add(types.InlineKeyboardButton(text='>', callback_data='forw'))
+    bot.send_message(message.chat.id, lines[0], reply_markup=keyb)
+    with open('users.json', 'w') as f:
+        json.dump(data, f, indent=4)
+        
 @bot.message_handler(commands=['test'])
 def test(message, i = 1):
     if (i == 1):
@@ -150,3 +199,4 @@ try:
 except Exception as e:
     print(f'[ERR] {str(t.now())} | POLLING FATAL ERROR')
     print(f'[ERR] {str(t.now())} | {str(e)}')
+

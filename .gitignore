@@ -1,0 +1,5 @@
+users.json
+test.txt
+*test.json
+*.ini
+*.cfg
