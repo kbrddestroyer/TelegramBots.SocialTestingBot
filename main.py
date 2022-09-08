@@ -67,6 +67,17 @@ def callback_query(call):
         text=str(lines[data[str(call.message.chat.id)]]), reply_markup=keyb)
         with open('users.json', 'w') as f:
             json.dump(data, f, indent=4)
+    if (call.data == 'Channel'):
+        bot.send_message(call.message.chat.id, "Канал тут")
+    if (call.data == 'Books'):
+        bot.send_message(call.message.chat.id, "Книги тут")
+    if (call.data == 'Tests'):
+        ChangeAge(call.message)
+    if (call.data == 'Diary'):
+        bot.send_message(call.message.chat.id, "Дневник тут")
+    if (call.data == 'Specialist'):
+        bot.send_message(call.message.chat.id, "Специалисты")
+    bot.answer_callback_query(call.id)
 @bot.message_handler(commands=['report'])
 def report(message):
     bot.send_message(message.chat.id, 'Кратко опишите вашу проблему:')
@@ -80,10 +91,18 @@ def send_report(message):
 @bot.message_handler(commands=['start'])
 def start(message):
     print(f'[LOG] {str(t.now())} | @{message.from_user.username} started')
+    keyb = types.InlineKeyboardMarkup()
+    keyb.row(
+        types.InlineKeyboardButton(text="Канал", callback_data='Channel'),
+        types.InlineKeyboardButton(text="Литература", callback_data='Books'),
+        types.InlineKeyboardButton(text="Тесты", callback_data='Tests')
+    )
+    keyb.row(
+            types.InlineKeyboardButton(text="Дневник тревоги", callback_data='Diary'),
+            types.InlineKeyboardButton(text="Специалисты", callback_data='Specialist')
+    )
     bot.send_message(message.chat.id, 
-    "/help для более подробной информации\nПожалуйста, отправьте свой возраст: ")
-    bot.register_next_step_handler(message, change_age)
-
+    f"Привет, {message.from_user.first_name}\nВас приветствует команда PsyShine! Этот текст надо скопипастить, а мне лень списывать с картинки", reply_markup=keyb)
 @bot.message_handler(commands=['change_age'])
 def ChangeAge(message):
     bot.send_message(message.chat.id, 'Пожалуйста, отправьте свой возраст: ')
