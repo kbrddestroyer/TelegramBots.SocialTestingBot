@@ -24,7 +24,7 @@ adminpass = config['BOT']['ADMINPASS']
 
 print(f'[LOG] {str(t.now())} | LOADING: CURRENT TOKEN: {TOKEN}')
 
-bot = telebot.AsyncTeleBot(TOKEN)
+bot = telebot.TeleBot(TOKEN)
 crashreport = telebot.TeleBot(TOKEN)
 
 print(f'[LOG] {str(t.now())} | LOADING: ADMINPASS: {adminpass}')
